@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Spur Gear SVG Test</title>
+  <!-- import Vue before Element -->
+  <script src="https://unpkg.com/vue@2.6.12/dist/vue.js"></script>
+  <!-- import CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+  <!-- import JavaScript -->
+  <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+  <!-- import SVG modules -->
+  <script type="text/javascript" src="lib/js/clipper_unminified.js"></script>
+  <script type="text/javascript" src="lib/js/svg.js"></script>
+  <script type="text/javascript" src="lib/js/svg.path.js"></script>
+  <script type="text/javascript" src="lib/js/svg.export.js"></script>
+  <script type="text/javascript" src="lib/js/svg.pan-zoom.js"></script>
+  <!-- import local modules -->
+  <script type="module" src="js/spurGearSvgTest.js"></script>
+</head>
+<body>
+<div id="app">
+  <h1>Spur Gear SVG Test<span style="font-size: 10px; margin-left: 20px"> IGHS - Ma Zijian - 2022</span></h1>
+  <el-form :inline="true" :model="paramForm" label-width="120px">
+    <el-form-item v-for="item in paramInfoList" :label="item.label + ' ' + item.symbol" :key="item.prop">
+      <el-input v-if="item.type === 'input'" v-model="paramForm[item.prop]" :disabled="item.disabled" @input="onInput($event)"></el-input>
+    </el-form-item>
+  </el-form>
+  <el-button type="primary" @click="handleUpdate" class="button">更新</el-button>
+  <div id="drawing" class="SVGDiv"></div>
+  <div id="drawingForExport" style="display: none"></div>
+  <div id="SVGCode" class="SVGCode"></div>
+  <el-button type="primary" @click="handleDownloadSVG" class="button">下载SVG</el-button>
+</div>
+</body>
+
+<style>
+  body {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 10px;
+  }
+
+  .button {
+    margin: 15px;
+  }
+
+  .SVGDiv {
+    border: 1px solid black;
+    padding: 10px;
+    margin: 0 auto;
+  }
+
+  .SVGCode {
+    font-size: 12px;
+    border: 1px solid #CCC;
+    border-radius: 3px;
+    background: LightGray;
+    padding: 10px;
+    width: 800px;
+    margin: 20px auto;
+    max-height: 200px;
+    overflow: auto;
+  }
+</style>
+</html>
