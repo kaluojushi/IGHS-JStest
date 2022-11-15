@@ -83,7 +83,7 @@ export default class SpurGear {
     this.position.top = this.position.topLeft.Y;
 
     this.toothPointsTemplate = this.createToothPath();
-    console.log(this.toothPointsTemplate)
+    // console.log(this.toothPointsTemplate)
   }
 
   // 绘画图形
@@ -109,6 +109,29 @@ export default class SpurGear {
     if (this.params.gearCenterHoleRadius > 0) {
       this.drawCircle(regularGroup, this.ORIGIN, this.params.gearCenterHoleRadius);
     }
+    const cutterPath = this.createToothCutter().cutterPath;
+    const path = regularGroup.path();
+    // this.drawCircles(regularGroup, cutterPath, 0.1)
+    // path.M(this.createSVGPoint(cutterPath[0]));
+    // cutterPath.slice(1).forEach(p => path.L(this.createSVGPoint(p)));
+
+    const cutterPaths = this.createToothCutterPaths().cutterPaths;
+    path.stroke({width: 0.1});
+    let i = 0;
+    // for(const pa of cutterPaths) {
+    //   setTimeout(() => {
+    //     path.M(this.createSVGPoint(pa[0]));
+    //     pa.slice(1).forEach(p => path.L(this.createSVGPoint(p)));
+    //     path.L(this.createSVGPoint(pa[0]));
+    //   }, 2000 + 10 * (i++))
+    // }
+    const cutoutPath = this.createToothCutoutPath().map(p => ({x: p.X / this.CLIPPER_SCALE, y: p.Y / this.CLIPPER_SCALE}));
+    // path.M(cutoutPath[0]);
+    // cutoutPath.slice(1).forEach(p => path.L(p));
+    // path.L(cutoutPath[0]);
+
+    this.createHalfToothPath(regularGroup);
+    this.createToothPath(regularGroup)
     // 插入齿轮路径
     this.insertGearSVGPath(regularGroup);
 
@@ -140,7 +163,7 @@ export default class SpurGear {
 
   // 创建齿刀路径
   createToothCutterPaths() {
-    const [p, ra] = this.getGearParams(["pitchRadius", "addendumRadius"]);
+    const [r, ra] = this.getGearParams(["pitchRadius", "addendumRadius"]);
 
     const angleStepSize = Math.PI / 600;
     const {cutterPath, bottomLeftCornerIndex} = this.createToothCutter();
@@ -149,7 +172,7 @@ export default class SpurGear {
     let stepCounter = 0;
     while (true) {
       const angle = stepCounter * angleStepSize;
-      const xTranslation = angle * p;
+      const xTranslation = angle * r;
       let transformedCutterPath = this.translatePath(cutterPath, xTranslation, 0);
       transformedCutterPath = this.rotatePathAroundCenter(transformedCutterPath, this.ORIGIN, angle);
       cutterPaths.push(transformedCutterPath);
@@ -190,7 +213,7 @@ export default class SpurGear {
   }
 
   // 创建一半的齿路径
-  createHalfToothPath() {
+  createHalfToothPath(group) {
     const [p, ra, ha, r] = this.getGearParams(["circularPitch", "addendumRadius", "addendum", "pitchRadius"]);
     const toothCutoutPath = this.createToothCutoutPath();
 
@@ -212,6 +235,15 @@ export default class SpurGear {
       halfPointOnCircle,
       tangentIntercept
     ];
+    // if (group) {
+    //   const path = group.path();
+    //   this.drawCircle(group, this.ORIGIN, 0.1)
+    //   this.drawCircle(group, halfPointOnCircle, 0.1)
+    //   this.drawCircle(group, tangentIntercept, 0.1)
+    //   path.M(this.createSVGPoint(intersectPath[0]));
+    //   intersectPath.slice(1).forEach(p => path.L(this.createSVGPoint(p)))
+    //   path.L(this.createSVGPoint(intersectPath[0]));
+    // }
     ClipperLib.JS.ScaleUpPath(intersectPath, this.CLIPPER_SCALE);
 
     const clipper = new ClipperLib.Clipper();
@@ -225,6 +257,15 @@ export default class SpurGear {
     const clippedToothCutoutPath = lightenedPaths[0];
 
     ClipperLib.JS.ScaleDownPath(clippedToothCutoutPath, this.CLIPPER_SCALE);
+    // if (group) {
+    //   const path = group.path();
+    //   const pa = clippedToothCutoutPath;
+    //   console.log(pa)
+    //   path.M(this.createSVGPoint(pa[0]));
+    //   let i = 0;
+    //   pa.slice(1).forEach(p => path.L(this.createSVGPoint(p)));
+    //   path.L(this.createSVGPoint(pa[0]));
+    // }
 
     const dedendumStartIndex = clippedToothCutoutPath.findIndex(point => Math.abs(point.X) < 0.01 * ha && point.Y < r);
     const halfToothPath = [clippedToothCutoutPath[dedendumStartIndex]];
@@ -248,24 +289,41 @@ export default class SpurGear {
     const vectorBetweenPoints = this.subtractVectors(firstOnOrOutsidePoint, lastInsidePoint);
     const pointOnOuterRadius = this.addVectors(lastInsidePoint, this.numericalMultiplyVector(ratio, vectorBetweenPoints));
     halfToothPath.push(pointOnOuterRadius);
+    // if (group) {
+    //   const path = group.path().stroke({color: "black"});
+    //   const pa = halfToothPath;
+    //   console.log(pa)
+    //   path.M(this.createSVGPoint(pa[0]));
+    //   let i = 0;
+    //   pa.slice(1).forEach(p => setTimeout(() => path.L(this.createSVGPoint(p)), 0));
+    // }
 
     return halfToothPath;
   }
 
   // 创建完整齿路径
-  createToothPath() {
+  createToothPath(group) {
     const halfToothPath = this.createHalfToothPath();
     const mirroredHalfTooth = [...halfToothPath];
     mirroredHalfTooth.reverse().pop();
-    return [...mirroredHalfTooth.map(point => this.createPoint(-point.X, point.Y)), ...halfToothPath];
+    const toothPath = [...mirroredHalfTooth.map(point => this.createPoint(-point.X, point.Y)), ...halfToothPath];
+    // if (group) {
+    //   const path = group.path().stroke({color: "black"});
+    //   const pa = toothPath;
+    //   console.log(pa)
+    //   path.M(this.createSVGPoint(pa[0]));
+    //   let i = 0;
+    //   pa.slice(1).forEach(p => setTimeout(() => path.L(this.createSVGPoint(p)), 0));
+    // }
+    return toothPath;
   }
 
   // 插入齿轮SVG路径
   insertGearSVGPath(group) {
     const [z, ra] = this.getGearParams(["toothNumber", "addendumRadius"]);
     const SVGPath = group.path();
-    const angleOffset = -Math.PI / 2 - this.params.angleToothToTooth / 2;
-    // const angleOffset = 0;
+    // const angleOffset = -Math.PI / 2 - this.params.angleToothToTooth / 2;
+    const angleOffset = 0;
 
     let firstSVGPoint;
     for (let i = 0; i < z; i++) {

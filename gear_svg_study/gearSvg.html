@@ -709,6 +709,7 @@
 
       // 创建齿刀路径
       createToothCutterPaths() {
+        // 齿刀每一步所旋转的角度
         let angleStepSize = Math.PI / 600;
 
         let {cutterPath, lowerLeftCornerIndex} = this.createToothCutter();
@@ -718,16 +719,18 @@
         // For illustration see http://lcamtuf.coredump.cx/gcnc/ch6/, section 'Putting it all together'.
         // We continue until the moved tooth cutter's lower left corner is outside of the outer circle of the gear.
         // Going any further will no longer influence the shape of the tooth.
-        // 为了创建齿廓，我们创造虚拟的无限大齿轮，然后旋转生成的刀具位置
+        // 为了创建齿廓，我们创造虚拟的无限大齿轮（齿条），然后旋转生成的刀具位置
         // 我们继续该操作，直到移动的齿刀左下角位于齿轮外圆之外
         // 再继续将不会影响齿的形状
         var stepCounter = 0;
         while (true) {
+          // 齿轮与齿条在节圆处线速度相同，当齿轮旋转θ角时，齿条移动距离为 ωr*θ/ω = r*θ
           let angle = stepCounter * angleStepSize;
           let xTranslation = angle * this.pitchRadius;
 
           // we move in both directions
           // 在每个方向上移动
+          // 齿条向右移动，齿轮逆时针转动，相对齿轮，梯形齿刀为水平向右、顺时针转动的叠加运动
           var transformedCutterPath = createTranslatedPath(cutterPath, xTranslation, 0);
           transformedCutterPath = rotatePointsAroundCenter(transformedCutterPath, ORIGIN, angle);
 
@@ -735,6 +738,7 @@
 
           // Rotate in opposite direction. This is required to get the undercuts.
           // 在相反方向上移动，这是获得根切所必须的
+          // 让梯形齿刀对称运动一次，否则基圆下面会被卡住
           //console.log("xTranslation: " + xTranslation);
           transformedCutterPath = createTranslatedPath(cutterPath, -xTranslation, 0);
           transformedCutterPath = rotatePointsAroundCenter(transformedCutterPath, ORIGIN, -angle);
@@ -771,6 +775,7 @@
         //console.log("clearance: " + this.clearance);
 
         // 切削深度，即齿根高，hf = ha + c
+        // 齿刀外部长度，定义为3倍的齿根高
         let cutterDepth = this.addendum + this.clearance;
         let cutterOutsideLength = 3 * this.addendum;
         //console.log("cutterDepth: " + cutterDepth);
@@ -788,14 +793,17 @@
 
         // Create the cutout at 6 o'clock position pointing upwards
         // 在6点钟方向向上创建切口
+        // 计算两个y坐标，注意y轴正方向在SVG是6点钟方向
         let yBottom = this.pitchRadius + this.profileShift * this.addendum - cutterDepth;
         let yTop = this.pitchRadius + this.profileShift * this.addendum + cutterOutsideLength;
 
+        // 梯形齿刀四个角的坐标
         let lowerRightCorner = createPoint(toothWidth / 2 + dx - tanPressureAngle * cutterDepth, yBottom);
         let upperRightCorner = createPoint(toothWidth / 2 + dx + tanPressureAngle * cutterOutsideLength, yTop);
         let upperLeftCorner = createPoint(-upperRightCorner.X, upperRightCorner.Y);
         let lowerLeftCorner = createPoint(-lowerRightCorner.X, lowerRightCorner.Y);
 
+        // 梯形齿刀路径（左下角在SVG中为左上角）
         let cutterPath = [lowerLeftCorner, upperLeftCorner, upperRightCorner, lowerRightCorner];
 
         return {
