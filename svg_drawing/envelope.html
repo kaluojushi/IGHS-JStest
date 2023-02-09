@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SVG Drawing - origin</title>
+  <!-- import Vue before Element -->
+  <script src="https://unpkg.com/vue@2.6.12/dist/vue.js"></script>
+  <!-- import CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/element-ui@2.15.10/lib/theme-chalk/index.css">
+  <!-- import JavaScript -->
+  <script src="https://unpkg.com/element-ui@2.15.10/lib/index.js"></script>
+  <!-- import SVG modules -->
+  <script type="text/javascript" src="lib/js/clipper_unminified.js"></script>
+  <script type="text/javascript" src="lib/js/svg.js"></script>
+  <script type="text/javascript" src="lib/js/svg.path.js"></script>
+  <script type="text/javascript" src="lib/js/svg.export.js"></script>
+  <script type="text/javascript" src="lib/js/svg.pan-zoom.js"></script>
+  <!-- import local modules -->
+  <script type="module" src="js/envelope.js"></script>
+</head>
+<body>
+<div id="app">
+  <h1>SVG Drawing - envelope<span style="font-size: 10px; margin-left: 20px"> IGHS - Ma Zijian - 2023</span></h1>
+  <el-descriptions :column="3" border class="descriptions">
+    <el-descriptions-item v-for="item in paramInfoList" :key="item.prop" :label="item.label + ' ' + item.symbol">
+      {{ paramForm[item.prop] }}
+    </el-descriptions-item>
+  </el-descriptions>
+  <el-button type="primary" @click="handleExportSVG" class="button">导出</el-button>
+  <el-button type="info" @click="display" class="button">重置</el-button>
+  <div id="drawing" class="SVGDiv"></div>
+</div>
+</body>
+
+<style>
+  body {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 10px;
+  }
+
+  .descriptions {
+    margin: 25px 0;
+  }
+
+  .SVGDiv {
+    border: 1px solid black;
+    padding: 10px;
+    margin: 0 auto;
+  }
+
+  .button {
+    margin: 15px;
+  }
+</style>
+</html>
